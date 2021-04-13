@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 import matplotlib.pyplot as plt
 from Particle import Particle
 from Cell import Cell
@@ -67,6 +68,7 @@ def normal(mu=0, sigma=1):
 class Lagrange:
 
     def __init__(self, grid, NSTEPS=NSTEPS):
+        self.grid_copy = deepcopy(grid)
         self.grid = grid
         self.NSTEPS = NSTEPS
         self.ITYPESPARK = None
@@ -130,6 +132,9 @@ class Lagrange:
                     self.particles[k + cell.NPARTTR + icounter].update(x=x, y=y, type=2)
                 icounter += cell.NPARTTR + cell.NPARTRAD
     
+    def clear(self):
+        self.__init__(self.grid_copy, self.NSTEPS)
+
     def start_fire(self, ITYPESPARK=1):
         """        
             START FIRE
@@ -276,8 +281,8 @@ class Lagrange:
         FPARTX, FPARTY, FPARTST = self.get_particles_props()
         plt.clf()
         plt.scatter(FPARTX, FPARTY, FPARTST*5 + 0.01, c=FPARTST, cmap="jet")
+        plt.clim(0, 1)
         plt.colorbar()
-
         plt.pause(0.001)
 
     def launch(self):
@@ -305,31 +310,45 @@ class Lagrange:
         print("[END of simulation]")
         plt.show()
     
-    def get_fire_line(self):
-        XP = []
-        YP = []
-        ST = []
-        Max = -10
-
+    def get_fire_line(self, epsilon=0.01):
+        XP = []    # particle x-position
+        YP = []    # particle y-position
+        ST = []    # particle burning state
+        Max = -10  # maximum burning state
+        
+        # loop through all particles
         for ip in range(self.NPART):
+            # get current particle
             particle = self.particles[ip]
+            # if particle state is greater than STTHR (Threshold to decide if particle is "on")
+            # store particle's properties
             if particle["state"] > STTHR:
                 XP.append(particle["x"])
                 YP.append(particle["y"])
                 ST.append(particle["state"])
+                # update maximum burning state
                 Max = max(Max, particle["state"])
         
-        epsilon = 0.001
+        # fetch fire line: we loop through all active particle
+        # and store the particle which have a burning state between 
+        # Max - epsilon and Max
         slices = []
         for i, state in enumerate(ST):
             if Max - epsilon <= state <= Max:
                 slices.append(i)
-        print(Max-epsilon, Max)
-        fig, (ax1, ax2) = plt.subplots(1, 2)
+
+        # PLOTS
+        _, (ax1, ax2) = plt.subplots(1, 2)
         z = ax1.scatter(XP, YP, c=ST, cmap="jet")
-        ax2.scatter([XP[i] for i in slices], [YP[i] for i in slices], c=[ST[i] for i in slices], cmap="jet")
+        print(max(XP), min(XP))
+        z2 = ax2.scatter([XP[i] for i in slices], [YP[i] for i in slices], c=[ST[i] for i in slices], cmap="jet")
         plt.colorbar(z)
-        plt.xlim(0, 110)
+        # plt.clim(0, 1)
+        XMAX = int(max(XP)) + 10
+        ax1.set_xlim(0, XMAX)
+        ax2.set_xlim(0, XMAX)
+        z.set_clim(0, 1)
+        z2.set_clim(0, 1)
         plt.show()
 
 

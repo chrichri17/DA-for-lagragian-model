@@ -128,10 +128,39 @@ def EKF(ub, w, ObsOp, JObsOp, R, B):
     K = B @ Dh.T @ np.linalg.inv(D)
 
     # compute analysis
-    ua = ub + K @ (w-ObsOp(ub))
+    ua = ub + K @ (w - ObsOp(ub))
     P = (np.eye(n) - K@Dh) @ B
     return ua, P
 
+def EnKF(ubi, w, ObsOp, JObsOp, R, B):
+    # The analysis step for the (stochastic) ensemble Kalman filter
+    # with virtual observations 
+    n, N = ubi.shape # n is the state dimension and N is the size of ensemble
+    m = w.shape[0]   # m is the size of measurement vector
+    
+    # compute the mean of forecast ensemble
+    ub = np.mean(ubi, 1)
+    # compute Jacobian of observation operator at ub
+    Dh = JObsOp(ub)
+    # compute Kalman gain
+    D = Dh @ B @ Dh.T + R
+    K = B @ Dh @ np.linalg.inv(D)
+
+    
+    wi  = np.zeros([m, N])
+    uai = np.zeros([n, N])
+    
+    for i in range(N):
+        # create virtual observations
+        wi[:, i] = w + np.random.multivariate_normal(np.zeros(m), R)
+        # compute analysis ensemble
+        uai[:, i] = ubi[:, i] + K @ (wi[:, i] - ObsOp(ubi[:, i]))
+    
+    # compute the mean of analysis ensemble
+    ua = np.mean(uai, 1)
+    # compute analysis error covariance matrix
+    P = (1/(N-1))*(uai - ua.reshape(-1,1)) @ (uai - ua.reshape(-1,1)).T
+    return uai, P
 
 #%% Application: Lorenz 63
 ########################### Data Assimilation #################################
@@ -172,7 +201,7 @@ for k in range(3):
     ax[k].set_xlabel("$t$",fontsize=22)
     ax[k].axvspan(0, tm_m, color="y", alpha=0.4, lw=0)
 
-ax[0].legend(loc="center", bbox_to_anchor=(0.5, 1.25),ncol =4, fontsize=15)
+ax[0].legend(loc="center", bbox_to_anchor=(0.5, 1.25), ncol=4, fontsize=15)
 ax[0].set_ylabel("$x(t)$")
 ax[1].set_ylabel("$y(t)$")
 ax[2].set_ylabel("$z(t)$")

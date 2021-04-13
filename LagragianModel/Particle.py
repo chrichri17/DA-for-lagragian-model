@@ -23,6 +23,7 @@ class Particle:
             could have different MEMORY to account for different QMAX
         """
         self._properties = {"state", "height", "x", "y", "tmem", "ux", "vy", "type", "factor"}
+        self._props = {"state", "height", "x", "y", "ux", "vy"}
         self.values = {props: 0 for props in self._properties}
         self.update(**kwargs)
     
@@ -47,3 +48,23 @@ class Particle:
         if key in self._properties:
             return self.values[key]
         raise KeyError(f"particle doesn't have property {key}.")
+    
+    def __add__(self, value):
+        """ Add value to each self useful properties """
+        if isinstance(value, (int, float)):
+            state = self.values["state"]
+            for key in self._props:
+                self.values[key] += value
+            self.values["state"] = state
+        else:
+            raise ValueError("Addition with type {} not supported".format(type(value)))
+        
+        return self.__class__(**self.values)
+
+    def __radd__(self, value):
+        """ Called if 4 + self for instance """
+        return self.__add__(value)
+    
+    def __repr__(self):
+        state, _, x, y, ux, vy, *rest = self.get_all()
+        return f"Particle(state={state}, x={x}, y={y}, ux={ux}, vy={vy})"

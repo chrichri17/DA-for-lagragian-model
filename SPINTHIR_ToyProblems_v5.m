@@ -11,11 +11,11 @@ pduni=makedist('Uniform');
 % NX = # of grid lines; (NX-1) is the number of cells
 % NY = same in y-dir
 %
-NX=101;
-NY=101;
-XMAX=2000.0;
+NX=57;
+NY=57;
+XMAX=200.0;
 XMIN=0.0;
-YMAX=2000.0;
+YMAX=200.0;
 YMIN=0.0;
 DX=(XMAX-XMIN)/(NX-1);
 DY=(YMAX-YMIN)/(NY-1);
