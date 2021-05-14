@@ -1,19 +1,24 @@
 import numpy as np
 from random import random
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from Cell import Cell
+from cell import Cell
 
 class Grid:
-    """
-        DEFINE DOMAIN AND GRID
+    """Object to model the domain grid.
+
+        Params:
+        -------
+
         IN REAL APPLICATION, this comes from outside UNITS: m
-        NX = # of grid lines (NX-1) is the number of cells
-        NY = same in y-dir
+        NX     (int, optional): # of grid lines (NX-1) is the number of cells. Defaults to 101
+        NY     (int, optional): # of grid columns (NY-1) is the number of cells. Defaults to 101
+        XMIN (float, optional): lower bound of grid in x-dir. Defaults to 0
+        XMAX (float, optional): upper bound of grid in x-dir. Defaults to 2000
+        YMIN (float, optional): lower bound of grid in y-dir. Defaults to 0
+        YMAX (float, optional): upper bound of grid in y-dir. Defaults to 2000
     """
 
     def __init__(self, NX=101, NY=101, XMIN=0, XMAX=2000, YMIN=0, YMAX=2000):
-        """ NX and NY are the size of our grid """
         self.NX = NX
         self.NY = NY
         self.XMIN = XMIN
@@ -35,9 +40,8 @@ class Grid:
     
 
     def set_non_flammable_cells(self, ratio, NROAD=5, IROAD=29):
-        """
-            Put a fraction "ratio" of non-flammable cells. This is to model the
-            "vegetation coverage" or concrete buildings & roads.
+        """Put a fraction `ratio` of non-flammable cells. This is to model the
+        "vegetation coverage" or "concrete buildings" & "roads".
         """
         NNONFL = int(ratio*(self.NX - 1)*(self.NY - 1))
         for _ in range(NNONFL):
@@ -46,7 +50,6 @@ class Grid:
             self.CELLS[IRAND, JRAND].cannot_burn()
         
         # Put a few roads
-
         for i in range(IROAD, self.NX - 1):
             for j in range(NROAD):
                 JROAD = round((j+1)*(self.NY - 1)/(NROAD + 1)) - 1
@@ -64,29 +67,23 @@ class Grid:
             for j in range(jstart, jend):
                 self.CELLS[i, j].cannot_burn()
     
-    def get_heat_released(self):
-        """ Get array of QMAXTR for each cell of the grid """
-        QMAXTR = np.empty((self.NX - 1, self.NY - 1))
+    def get_cells_prop(self, prop_name):
+        """Get an array of `prop_name` values for each cell of the grid."""
+        DATA = np.empty((self.NX - 1, self.NY - 1))
         for i in range(self.NX - 1):
             for j in range(self.NY - 1):
-                QMAXTR[i, j] = self.CELLS[i, j].QMAXTR
-        
-        return QMAXTR
+                DATA[i, j] = self.CELLS[i, j][prop_name]
+        return DATA
+
+    def get_heat_released(self):
+        return self.get_cells_prop("QMAXTR")
 
     def get_burn_state(self):
-        """ Get array of BURNSTAT for each cell of the grid """
-        BURNSTAT = np.empty((self.NX - 1, self.NY - 1))
-        for i in range(self.NX - 1):
-            for j in range(self.NY - 1):
-                BURNSTAT[i, j] = self.CELLS[i, j].BURNSTAT
-        
-        return BURNSTAT
-
+        return self.get_cells_prop("BURNSTAT")
 
     def get_npart(self):
-        """ Return the number of particle """
+        """Return the number of particle."""
         return 2*Cell.NPARTMAX*(self.NX - 1)*(self.NY - 1)
-
 
     def contour_plot(self):
         fig = plt.figure()
@@ -99,4 +96,3 @@ class Grid:
     def __repr__(self):
         return f"Grid(NX={self.NX}, NY={self.NY})"
 
-    

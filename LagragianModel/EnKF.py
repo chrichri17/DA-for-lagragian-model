@@ -4,7 +4,7 @@ import numpy as np
 import numpy.random as random
 import numpy.linalg as la
 from copy import deepcopy
-from Lagrange import Lagrange
+from lagrange import Lagrange
 
 class Ensemble:
     
@@ -26,26 +26,26 @@ class Ensemble:
 
 class Member:
 
-    def __init__(self, grid, NSTEPS=400):
-        self.model = Lagrange(grid, NSTEPS)
+    def __init__(self, grid, NSTEPS=200):
+        self.model = Lagrange(deepcopy(grid), NSTEPS)
         self.model.start_fire(ITYPESPARK=1)
+        self.states = np.empty((NSTEPS, grid.NY - 1))
+        self.current = 0
     
     def propagate(self, steps):
         for istep in steps:
             self.model.propagate(istep)
+            self.states[istep, :] = self.get_fire_line()
+            self.current = istep
     
-    def get_props(self, key):
-        output = np.empty(self.model.NPART)
-
-        for ip in range(self.model.NPART):
-            particle   = self.model.particles[ip]
-            output[ip] = particle[key]
-        
-        return output
+    def get_fire_line(self):
+        return self.model.interpolate_fire_line()
     
-    def update(self, key, values):
-        for i, particle in enumerate(self.model.particles):
-            particle[key] = values[i]
+    def update(self, values):
+        self.states[self.current] = values
+    
+    def get_current_state(self):
+        return self.states[self.current]
 
 
 class EnKF:
@@ -57,41 +57,58 @@ class EnKF:
         self.sigma  = sigma
         self.NSTEPS = NSTEPS       # number of time step for model
         # measurement covariance
-        self.Cee = sigma**2 * np.eye(grid.get_npart())
+        self.Cee = sigma**2 * np.eye(grid.NY - 1)
         # measurement matrix
-        self.M = np.eye(grid.get_npart())
+        self.M = np.eye(grid.NY - 1)
         # initialize ensemble
         self.ensemble = Ensemble()
         for _ in range(N):
             self.ensemble.append(Member(grid, NSTEPS))
     
 
-    def twin_experiment(self, data=None, key="state"):
+    def start_twin_experiment(self, key="state"):
+        print('============================')
         print('Starting the twin experiment')
+        print('============================')
+        print(self.grid, f"NSTEPS = {self.NSTEPS}")
         np.random.seed(2021)
-        if data:
-            self.experiment_data = data
-            return
         # create model
         model = Lagrange(self.grid, self.NSTEPS)
         model.start_fire(ITYPESPARK=1)
         # twin experiment data
-        self.experiment_data = np.empty((self.NSTEPS, self.grid.get_npart()), dtype=object)
+        shape = (self.NSTEPS, self.grid.NY - 1)
+        self.experiment_data = np.empty(shape)
         for ip in range(self.NSTEPS):
+            # propagate model
             model.propagate(ip)
-            self.experiment_data[ip, :] = [p[key] for p in model.particles]
+            # store data
+            self.experiment_data[ip, :] = model.interpolate_fire_line()
+        print(f"Creation experiment_data\nwith shape: {shape}")
+        print('-----------[END]------------')
 
+    def launch_filter(self):
+        if not isinstance(self.experiment_data, np.ndarray):
+            print("Can not start data assimilation. experiment_data are undefined")
+            return
+        print('\n'*3)
+        print('==============================')
+        print('Starting the data assmiliation')
+        print('==============================')
+        print("Ensemble kalman filter paramaters are: ")
+        print("Model grid: ", self.grid)
+        print("Number N of ensemble members: N = ", self.N)
+        print("Number of timesteps between measurements: k_meas = ", self.k_meas)
+        print("Measurement covariance std: sigma = ", self.sigma)
 
-    def launch_filter(self, props="state"):
         t_it = 0
         for _ in range(self.NSTEPS//self.k_meas):
             # predict
             self.ensemble.propagate(range(t_it, t_it + self.k_meas + 1))
             t_it += self.k_meas
-            print(t_it)
+            print(f"Measurement at t = {t_it}")
 
             # ensemble covariance a priori
-            sample = [m_it.get_props(props) for m_it in self.ensemble]
+            sample = [m_it.get_current_state() for m_it in self.ensemble]
             sample = np.array(sample).T
             C = np.cov(sample, ddof=1)
 
@@ -99,17 +116,17 @@ class EnKF:
             denom = self.Cee + self.M @ C @ self.M.T
             for m_it in self.ensemble:
                 # measurement
-                # states = [particle[props] for particle in self.experiment_data[t_it]]
-                d = random.multivariate_normal(self.experiment_data, self.Cee)
+                d = random.multivariate_normal(self.experiment_data[t_it], self.Cee)
 
                 # u
-                state = m_it.get_props(props)
+                state = m_it.get_current_state()
                 dstate = d - self.M @ state
                 dstate = C @ self.M.T @ la.solve(denom, dstate)
-                m_it.update(props, state + dstate)
+                # UPDATE the state
+                m_it.update(state + dstate)
 
             # ensemble covariance a posteriori
-            sample = [m_it.get_props(props) for m_it in self.ensemble]
+            sample = [m_it.get_current_state() for m_it in self.ensemble]
             sample = np.array(sample).T
             C_post = np.cov(sample, ddof=1)
 

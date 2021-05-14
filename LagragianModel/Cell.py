@@ -1,37 +1,38 @@
 
-"""
-    Class cell that represent a cell in our grid.
-
-    #### PARAMETERS FOR EACH CELL ("PLOT OF LAND") ####
-
-    TREEAREA  = fraction of cell area occupied by trees
-    BUILDAREA = fraction of cell area occupied by buildings
-    TREEAREA + BUILDAREA do not need to sum up to 1.
-    CLOCK    = the time axis for the potential fire in each 
-    NPARTTR  = total number of particles emitted from tree fire (0-10)
-    NPARTBLD = total number of particles emitted from building fire
-    QMAXTR   = Maximum heat release (MW/m2) from trees in each cell
-    QMAXBLD  = Maximum heat release (MW/m2) from buildings in each cell
-    TIGNTR   = Ignition time delay for tree (since arrival of burning particle
-               in cell) for each cell (in s)
-    TENDTR   = Fire duration for tree for each cell (s)
-    TIGNBLD  = As for TIGNTR,      but for the building
-    TENDBLD  = As for TENDTR,      but for the building
-    BURNSTAT = 0 in the beginning, will become 1 if visited by a burning particle.
-    BURNPROG = 0 in the beginning, counts how many burning particles arrived
-                 at this cell
-    BURNSTAT2 = 1 if cell has all its particles, 0 when it has emptied them.
-
-    Test numbers used for the above for now, more proper parameters and
-    their dependence on wind & tree & building type to be used later.
-    Other models for tree & building fire can be used, by adjusting NPART
-    and their relation with QMAX and Q(t)
-"""
 # Cell constant parameters
 IGNTIME    = 10.0
 BURNDUR    = 120
 
 class Cell:
+        
+    """Object to model a cell in our grid.
+
+        Params:
+        -------
+
+        TREEAREA  (float): fraction of cell area occupied by trees
+        BUILDAREA (float): fraction of cell area occupied by buildings
+                           TREEAREA + BUILDAREA do not need to sum up to 1.
+        CLOCK     (float): the time axis for the potential fire in each 
+        NPARTTR     (int): total number of particles emitted from tree fire (0-10)
+        NPARTBLD    (int): total number of particles emitted from building fire
+        QMAXTR    (float): Maximum heat release (MW/m2) from trees in each cell
+        QMAXBLD   (float): Maximum heat release (MW/m2) from buildings in each cell
+        TIGNTR    (float): Ignition time delay for tree (since arrival of burning particle
+                           in cell) for each cell (in s)
+        TENDTR    (float): Fire duration for tree for each cell (s)
+        TIGNBLD   (float): As for TIGNTR, but for the building
+        TENDBLD   (float): As for TENDTR, but for the building
+        BURNSTAT    (int): 0 in the beginning, will become 1 if visited by a burning particle.
+        BURNPROG    (int): in the beginning, counts how many burning particles arrived
+                           at this cell
+        BURNSTAT2   (int): 1 if cell has all its particles, 0 when it has emptied them.
+
+        Test numbers used for the above for now, more proper parameters and
+        their dependence on wind & tree & building type to be used later.
+        Other models for tree & building fire can be used, by adjusting NPART
+        and their relation with QMAX and Q(t)
+    """
     # Maximum number of particle
     NPARTMAX   = 1
     
@@ -52,9 +53,13 @@ class Cell:
         self.NPARTTR   = Cell.NPARTMAX
         self.NPARTRAD  = Cell.NPARTMAX
 
+
     def cannot_burn(self):
-        """ Define a cell that cannot burn """
-        self.QMAXTR  = 0.
-        self.QMAXBLD = 0.
-    
-    
+        """ Define a cell that cannot burn."""
+        self.QMAXTR  = 0.0
+        self.QMAXBLD = 0.0
+
+    def __getitem__(self, key):
+        if key in self.__dict__:
+            return self.__dict__[key]
+        raise KeyError(f"Cell doesn't have key '{key}'")
