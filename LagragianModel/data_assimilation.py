@@ -1,7 +1,6 @@
 # pylint: disable=import-error, unbalanced-tuple-unpacking
 import numpy as np
 from grid import Grid
-from lagrange import Lagrange
 from EnKF import EnKF
 
 # INITIALIZATION OF THE GRID
@@ -15,6 +14,7 @@ grid.set_non_flammable_cells(0.25)
 
 
 ### Data assimilation with twin experiment
-enkf = EnKF(grid, NSTEPS=300)
-enkf.start_twin_experiment()
+enkf = EnKF(grid, NSTEPS=100, N=2)
+# enkf.start_twin_experiment()
+enkf.load_twin_experiment_data("data.out")
 enkf.launch_filter()

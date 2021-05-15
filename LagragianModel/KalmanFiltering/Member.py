@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from ..LagrangianModel.Lagrange import Lagrange
+from ..lagrange import Lagrange
 
 class Member:
     """ Implements a member for the ensemble Kalman filter (EKF). 

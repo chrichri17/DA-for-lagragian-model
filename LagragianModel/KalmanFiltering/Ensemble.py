@@ -3,9 +3,9 @@
 class Ensemble:
     """ Object to store all the member of our ensemble kalman filter
 
-    Parameters
+    Attributes
     ----------
-    list :  container storing all the member
+    list (list) :  container storing all the member
 
 
     Methods
@@ -14,7 +14,6 @@ class Ensemble:
 
     propagate(steps) : propagate the lagragian model for
                        each member of the ensemble
-    
     """
     def __init__(self):
         self.list = []
