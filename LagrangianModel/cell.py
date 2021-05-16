@@ -63,3 +63,6 @@ class Cell:
         if key in self.__dict__:
             return self.__dict__[key]
         raise KeyError(f"Cell doesn't have key '{key}'")
+    
+    def __repr__(self):
+        return f"Cell(burning_state={self.BURNSTAT:.2f})"

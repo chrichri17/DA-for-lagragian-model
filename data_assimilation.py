@@ -1,4 +1,5 @@
 # pylint: disable=import-error, unbalanced-tuple-unpacking
+import matplotlib.pyplot as plt
 from LagrangianModel.grid import Grid
 from KalmanFiltering.EnKF import EnKF
 
@@ -13,7 +14,12 @@ grid.set_non_flammable_cells(0.25)
 
 
 ### Data assimilation with twin experiment
-enkf = EnKF(grid, NSTEPS=100, N=2)
+enkf = EnKF(grid, NSTEPS=300, N=2)
 # enkf.start_twin_experiment()
 enkf.load_twin_experiment_data("data.out")
-enkf.launch_filter()
+enkf.ensemble.propagate(range(300))
+# enkf.launch_filter()
+### Plot the error
+error = enkf.error_analysis()
+plt.plot(error)
+plt.show()

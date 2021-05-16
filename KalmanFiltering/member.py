@@ -32,7 +32,7 @@ class Member:
 
 
     Methods
-    ----------
+    -------
     propagate(steps) : propagate the lagrangian model
                        for each step in the iterable steps
     

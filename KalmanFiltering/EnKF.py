@@ -1,7 +1,6 @@
 # pylint: disable=import-error, unbalanced-tuple-unpacking
 
 import numpy as np
-import numpy.random as random
 import numpy.linalg as la
 # from copy import deepcopy
 from .ensemble import Ensemble
@@ -10,9 +9,9 @@ from LagrangianModel.lagrange import Lagrange
 
 
 EXPERIMENT_START = """
-============================
-Starting the twin experiment
-============================
+  ============================
+| Starting the twin experiment |
+  ============================
 Using :
 grid = {grid},
 LagrangeModel(grid, {nsteps})
@@ -25,9 +24,9 @@ Created twin experiment data with shape {shape}.
 """
 
 DA_MESSAGE = """
-==============================
-Starting the data assimilation
-==============================
+  ==============================
+| Starting the data assimilation |
+  ==============================
 
 Ensemble kalman filter parameters are:
 --------------------------------------
@@ -42,10 +41,12 @@ class EnKF:
 
     Init Parameters
     ---------------
+    TODO
 
 
     Attributes
     ----------
+    TODO
 
     
     Examples
@@ -59,8 +60,8 @@ class EnKF:
     >>> enkf.launch_filter()
     
 
-    After saving the experiment_data, we can load it whenever we come
-    and start the data assimilation
+    After saving the experiment_data, we can load it whenever we want
+    and re-start the data assimilation
     >>> enkf.load_twin_experiment_data("data.out")
     >>> enkf.launch_filter()
     """
@@ -80,7 +81,16 @@ class EnKF:
             self.ensemble.append(Member(grid, NSTEPS))
     
 
-    def start_twin_experiment(self, save=False, file_name=""):
+    def start_twin_experiment(self, save=False, file_name="data.out"):
+        """ Method used to launch the twin experiment.
+
+        Args:
+            save (bool, optional): If given, store the twin experiment data
+                                   in a file using file_name. Defaults to False.
+
+            file_name (str, optional): file name used to store the data if save == True.
+                                       Defaults to "data.out".
+        """
         print(EXPERIMENT_START.format(grid=self.grid, nsteps=self.NSTEPS))
         np.random.seed(2021)
         # create model
@@ -100,9 +110,15 @@ class EnKF:
         print(EXPERIMENT_END.format(shape=shape, save=save_msg))
     
     def load_twin_experiment_data(self, file_name):
+        """Prrototype to load an existing twin experiment data
+
+        Args:
+            file_name (str): the file name in which the data are stored
+        """
         self.experiment_data = np.loadtxt(file_name)
 
     def launch_filter(self):
+        """ Method used to launch the data assimilation simulation."""
         if not isinstance(self.experiment_data, np.ndarray):
             print("Can not start data assimilation. experiment_data are undefined")
             return
@@ -126,7 +142,7 @@ class EnKF:
             denom = self.Cee + self.M @ C @ self.M.T
             for m_it in self.ensemble:
                 # measurement
-                d = random.multivariate_normal(self.experiment_data[t_it], self.Cee)
+                d = np.random.multivariate_normal(self.experiment_data[t_it], self.Cee)
 
                 # u
                 state = m_it.get_current_state()
@@ -143,3 +159,11 @@ class EnKF:
             # ensemble covariance a posteriori theoretical
             dC = C @ self.M.T @ la.solve(denom, self.M @ C)
             C_th = C - dC
+    
+    def error_analysis(self):
+        error = np.empty(self.NSTEPS)
+        for t_it in range(self.NSTEPS):
+            state = np.mean([m_it.states[t_it] for m_it in self.ensemble], 0)
+            error[t_it] = la.norm(state  - self.experiment_data[t_it])
+        
+        return error

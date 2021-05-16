@@ -92,6 +92,7 @@ class Lagrange:
     SQRDT    (float): square root of DT
     NPART      (int): number of particles in the grid 
     ITYPESPARK (int): number to specify the type of the initial spark
+                      1 for fire line, 0 for a point
 
     TIME  (np.ndarray[float]): the time axis for the whole simulation
     BURNX (np.ndarray[float]): burning progress averaged in y-dir as a function of time & x-dir
@@ -99,7 +100,10 @@ class Lagrange:
 
     Methods:
     --------
-    start_fire(ITYPESPARK):
+    start_fire(ITYPESPARK): start the fire by setting either a front line
+                            or a point fire.
+    propagate(istep): propagate the model for the given timestep.
+
 
     """
     def __init__(self, grid, NSTEPS=NSTEPS):
@@ -330,7 +334,6 @@ class Lagrange:
             else:
                 for i, key in enumerate(props):
                     properties[i, ip] = particle[key]
-        
         return properties
 
 
@@ -383,7 +386,7 @@ class Lagrange:
 
 
     def plot_fire_line(self, epsilon=0.01, speed=10, stop=200):
-        """ Plot the fire line.png
+        """ Plot the fire line at specific time :
             Launch a simulation and plot the fire line at each step.
         """
         stop = min(stop, self.NPART)

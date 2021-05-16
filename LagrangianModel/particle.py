@@ -20,17 +20,18 @@ class Particle:
     Attributes:
     -----------
     props_name: all particle's properties name
-                    READ ONLY
-    values: a dict containing all values for each key in props
                 READ ONLY
+    values: a dict containing all values for each key in props
+            READ ONLY
 
 
     Methods:
     --------
 
     update(self, **kwargs): update the particle's value using kwargs dict
-    get_from_keys(self, keys): return a tuple with the values of each propery
-                                in the iterable 'keys' IN THE GIVEN ORDER.
+
+    get_from_keys(self, keys): return a tuple with the values of each property
+                               in the iterable 'keys' IN THE GIVEN ORDER.
 
     Example:
     -------
